@@ -1,0 +1,6 @@
+type: cdpruner
+budgets: [192, 128, 64]
+params:
+  theta: null              # balance factor (appendix C.4); null = plain diag(r) L diag(r)
+  relevance_space: auto    # auto | clip | llm
+  negate_relevance: auto   # auto: true in CLIP space (official code), false in LLM space

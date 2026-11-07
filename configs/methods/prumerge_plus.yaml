@@ -1,0 +1,4 @@
+type: prumerge_plus  # needs [CLS] attention + keys: LLaVA-1.5 only
+budgets: [192, 128, 64]
+params:
+  k: 32              # neighbours merged into each kept token

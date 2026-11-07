@@ -1,0 +1,17 @@
+# Every dataset, small subsets: checks prompts/parsing end-to-end (~5 min on an RTX 5070).
+name: smoke_all
+output_dir: outputs
+seed: 0
+models: [qwen2_5_vl_3b]
+datasets:
+  - {config: pope, limit: 60}
+  - {config: mme, limit: 100}
+  - {config: gqa, limit: 60}
+  - {config: textvqa, limit: 60}
+  - {config: scienceqa_img, limit: 60}
+  - {config: mmbench_en, limit: 20}     # 20 questions x rotations
+  - {config: mmbench_cn, limit: 20}
+methods:
+  - vanilla
+  - {config: cdpruner, budgets: [64]}
+generation: {max_new_tokens: 16}

@@ -1,0 +1,7 @@
+# InternVL3-8B at 896x896 (2x2 tiles + thumbnail = 1280 visual tokens), the CDPruner Table 9 setting.
+type: internvl
+pretrained: OpenGVLab/InternVL3-8B-hf
+dtype: bfloat16
+attn_implementation: sdpa
+image_size: [896, 896]
+processor_call_kwargs: {crop_to_patches: true, max_patches: 4}

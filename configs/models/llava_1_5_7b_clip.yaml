@@ -1,0 +1,5 @@
+type: llava
+pretrained: llava-hf/llava-1.5-7b-hf
+dtype: float16
+attn_implementation: sdpa
+clip_text_encoder: openai/clip-vit-large-patch14-336

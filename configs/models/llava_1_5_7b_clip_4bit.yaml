@@ -1,0 +1,8 @@
+# LLaVA-1.5-7B (4-bit LLM) + the CLIP text encoder paired with its vision tower.
+# Adds CLIP joint-space embeddings: enables TRIM and CDPruner's paper setting for LLaVA.
+type: llava
+pretrained: llava-hf/llava-1.5-7b-hf
+dtype: float16
+attn_implementation: sdpa
+quantization: 4bit
+clip_text_encoder: openai/clip-vit-large-patch14-336

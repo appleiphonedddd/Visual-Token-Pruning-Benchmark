@@ -1,0 +1,21 @@
+# Every method @ 64 tokens on a POPE subset, on LLaVA-1.5-7B (all features, incl. CLIP) and Qwen2.5-VL-3B
+# (encoder-attention / CLIP methods are skipped there). ~10 min on an RTX 5070.
+name: methods_smoke
+output_dir: outputs
+seed: 0
+models: [llava_1_5_7b_clip_4bit, qwen2_5_vl_3b]
+datasets: [{config: pope, limit: 100}]
+methods:
+  - vanilla
+  - {config: random, budgets: [64]}
+  - {config: pooling, budgets: [64]}
+  - {config: visionzip, budgets: [64]}
+  - {config: prumerge_plus, budgets: [64]}
+  - {config: trim, budgets: [64]}
+  - {config: divprune, budgets: [64]}
+  - {config: dppruner, budgets: [64]}
+  - {config: cdpruner, budgets: [64]}
+  - {config: fastv, budgets: [64]}
+  - {config: pdrop, budgets: [64]}
+  - {config: dart, budgets: [64]}
+generation: {max_new_tokens: 8}

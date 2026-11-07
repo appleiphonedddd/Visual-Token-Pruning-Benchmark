@@ -1,0 +1,2 @@
+type: pooling
+budgets: [192, 128, 64]

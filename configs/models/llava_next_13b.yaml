@@ -1,0 +1,5 @@
+type: llava_next
+pretrained: llava-hf/llava-v1.6-vicuna-13b-hf
+dtype: float16
+attn_implementation: sdpa
+image_size: [672, 672]

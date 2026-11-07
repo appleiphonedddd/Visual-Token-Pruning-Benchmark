@@ -1,0 +1,7 @@
+type: mmbench
+path: lmms-lab/MMBench
+split: dev
+data_files: cn/dev-*
+primary_metric: circular_accuracy
+prompt_suffix: "请直接回答选项字母。"
+limit: null

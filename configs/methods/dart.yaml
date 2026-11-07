@@ -1,0 +1,6 @@
+type: dart           # in-LLM before layer K: key-norm pivots + de-duplication (no attention scores needed)
+budgets: [192, 128, 64]
+params:
+  K: 2
+  pivot_image_token: 4
+  pivot_text_token: 4

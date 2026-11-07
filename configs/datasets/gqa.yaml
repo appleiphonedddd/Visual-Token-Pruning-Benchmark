@@ -1,0 +1,5 @@
+type: gqa
+path: lmms-lab/GQA
+split: testdev
+subset_prefix: testdev_balanced   # joins <prefix>_instructions with <prefix>_images
+limit: null                       # 12,578 questions

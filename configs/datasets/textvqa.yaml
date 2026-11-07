@@ -1,0 +1,6 @@
+type: textvqa
+path: lmms-lab/textvqa
+split: validation
+data_files: data/validation-*     # only download the 920 MB validation split
+ocr_reference: false              # true = LLaVA-1.5 protocol (adds "Reference OCR token: ..." to the prompt)
+limit: null

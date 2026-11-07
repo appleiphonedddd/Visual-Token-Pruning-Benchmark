@@ -1,0 +1,9 @@
+# All pre-LLM methods x 3 budgets on a POPE subset.
+name: pope_qwen3b
+output_dir: outputs
+seed: 0
+models: [qwen2_5_vl_3b]
+datasets: [pope]
+dataset_overrides: {limit: 900}
+methods: [vanilla, random, pooling, divprune, dppruner, cdpruner]
+generation: {max_new_tokens: 8}

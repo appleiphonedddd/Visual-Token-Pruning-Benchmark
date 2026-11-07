@@ -1,0 +1,7 @@
+# LLaVA-NeXT-7B with a 4-bit LLM decoder for 12 GB GPUs (not comparable with fp16 paper numbers).
+type: llava_next
+pretrained: llava-hf/llava-v1.6-vicuna-7b-hf
+dtype: float16
+attn_implementation: sdpa
+image_size: [672, 672]
+quantization: 4bit

@@ -1,0 +1,4 @@
+type: visionzip      # needs [CLS] attention + keys: LLaVA-1.5 only
+budgets: [192, 128, 64]
+params:
+  dominant_ratio: 0.84375   # 54/64: dominant vs. contextual split from the paper

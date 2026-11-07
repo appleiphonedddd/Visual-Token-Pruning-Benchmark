@@ -1,0 +1,7 @@
+# InternVL3-2B: single 448x448 tile -> 256 visual tokens on a 16x16 grid.
+type: internvl
+pretrained: OpenGVLab/InternVL3-2B-hf
+dtype: bfloat16
+attn_implementation: sdpa
+image_size: [448, 448]
+processor_call_kwargs: {crop_to_patches: false}

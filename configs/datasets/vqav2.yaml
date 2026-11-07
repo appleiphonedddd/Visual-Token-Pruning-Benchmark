@@ -1,0 +1,6 @@
+# Validation split (~7 GB, 214K questions). Papers report test-dev via the EvalAI server.
+type: vqav2
+path: lmms-lab/VQAv2
+split: validation
+data_files: data/validation-*
+limit: 5000

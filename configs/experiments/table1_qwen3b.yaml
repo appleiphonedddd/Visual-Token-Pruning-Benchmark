@@ -1,0 +1,15 @@
+# CDPruner Table 1-style sweep on Qwen2.5-VL-3B (subsets sized for a 12 GB GPU; drop limits for full runs).
+name: table1_qwen3b
+output_dir: outputs
+seed: 0
+models: [qwen2_5_vl_3b]
+datasets:
+  - {config: gqa, limit: 1000}
+  - {config: scienceqa_img}
+  - {config: textvqa, limit: 1000}
+  - {config: pope, limit: 1500}
+  - {config: mme}
+  - {config: mmbench_en, limit: 300}
+  - {config: mmbench_cn, limit: 300}
+methods: [vanilla, random, pooling, divprune, dppruner, cdpruner]
+generation: {max_new_tokens: 16}

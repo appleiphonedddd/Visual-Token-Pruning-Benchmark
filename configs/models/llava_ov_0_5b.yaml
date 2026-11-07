@@ -1,0 +1,6 @@
+# LLaVA-OneVision-0.5B (SigLIP + Qwen2-0.5B). 384x384 input -> base image + 1 anyres tile.
+type: llava_onevision
+pretrained: llava-hf/llava-onevision-qwen2-0.5b-ov-hf
+dtype: bfloat16
+attn_implementation: sdpa
+image_size: [384, 384]

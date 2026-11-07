@@ -1,0 +1,5 @@
+# LLaVA-1.5-7B (CLIP ViT-L/336 + Vicuna-7B): 576 visual tokens. fp16 needs ~15 GB.
+type: llava
+pretrained: llava-hf/llava-1.5-7b-hf
+dtype: float16
+attn_implementation: sdpa

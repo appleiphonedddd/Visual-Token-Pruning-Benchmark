@@ -1,0 +1,5 @@
+type: pdrop          # in-LLM, multi-stage: budget at layers[0], x ratio at every later stage
+budgets: [192, 128, 64]
+params:
+  layers: [2, 6, 12]
+  ratio: 0.5

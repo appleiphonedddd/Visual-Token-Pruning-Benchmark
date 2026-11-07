@@ -1,0 +1,6 @@
+type: mmbench
+path: lmms-lab/MMBench
+split: dev
+data_files: en/dev-*
+primary_metric: circular_accuracy  # official CircularEval; `accuracy` = per-row accuracy
+limit: null                        # 1,164 questions (4,329 rows incl. rotations); limit counts questions

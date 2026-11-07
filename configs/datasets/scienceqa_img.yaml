@@ -1,0 +1,5 @@
+type: scienceqa_img
+path: lmms-lab/ScienceQA
+split: test
+data_files: ScienceQA-IMG/test-*
+limit: null                       # 2,017 questions

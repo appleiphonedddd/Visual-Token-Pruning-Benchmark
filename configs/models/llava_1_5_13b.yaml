@@ -1,0 +1,4 @@
+type: llava
+pretrained: llava-hf/llava-1.5-13b-hf
+dtype: float16
+attn_implementation: sdpa

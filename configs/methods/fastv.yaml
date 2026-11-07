@@ -1,0 +1,4 @@
+type: fastv          # in-LLM: keep `budget` visual tokens from layer K on
+budgets: [192, 128, 64]
+params:
+  K: 2

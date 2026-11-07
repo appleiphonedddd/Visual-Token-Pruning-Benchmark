@@ -1,0 +1,2 @@
+type: dppruner     # CDPruner ablation: DPP without instruction relevance
+budgets: [192, 128, 64]

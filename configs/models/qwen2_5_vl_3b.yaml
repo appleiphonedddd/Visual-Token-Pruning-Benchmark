@@ -1,0 +1,5 @@
+type: qwen2_5_vl
+pretrained: Qwen/Qwen2.5-VL-3B-Instruct
+dtype: bfloat16
+attn_implementation: sdpa
+image_size: [672, 672]   # fixed resolution -> 24x24 = 576 visual tokens (like LLaVA-1.5); null = native

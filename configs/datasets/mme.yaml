@@ -1,0 +1,5 @@
+type: mme
+path: lmms-lab/MME
+split: test
+primary_metric: perception   # CDPruner reports perception; VisionZip reports `total` (perception + cognition)
+limit: null

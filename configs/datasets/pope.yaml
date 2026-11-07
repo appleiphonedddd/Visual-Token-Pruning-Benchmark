@@ -1,0 +1,4 @@
+type: pope
+path: lmms-lab/POPE
+split: test
+limit: null        # set e.g. 500 for a seeded random subset

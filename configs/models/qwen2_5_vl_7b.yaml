@@ -1,0 +1,6 @@
+# needs >= 24 GB GPU; same adapter as the 3B model
+type: qwen2_5_vl
+pretrained: Qwen/Qwen2.5-VL-7B-Instruct
+dtype: bfloat16
+attn_implementation: sdpa
+image_size: [1008, 1008]  # CDPruner Table 4 setting -> 1296 visual tokens

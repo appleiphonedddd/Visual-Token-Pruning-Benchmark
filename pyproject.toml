@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vtb"
+version = "0.1.0"
+description = "Visual Token Pruning Benchmark: compare pruning methods x MLLMs x datasets"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.7",
+    "transformers>=4.51",
+    "accelerate",
+    "datasets",
+    "omegaconf",
+    "pillow",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+quant = ["bitsandbytes>=0.45"]
+
+[project.scripts]
+vtb = "vtb.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "gpu: needs a CUDA GPU and downloaded model weights",
+    "data: needs benchmark datasets in the Hugging Face cache",
+]
+addopts = "-m 'not gpu and not data'"
