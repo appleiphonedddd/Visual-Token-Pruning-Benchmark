@@ -1,0 +1,19 @@
+# CDPruner Table 4: Qwen2.5-VL-7B at 1008x1008 (1,296 visual tokens) @ 512 / 256 / 128.
+# Paper benchmarks not available here: ChartQA, AI2D, OCRBench, HallusionBench.
+# The paper's MME (2304) is perception + cognition, hence primary_metric: total.
+# Needs >= 24 GB.
+name: cdpruner_table4_qwen7b
+output_dir: outputs
+seed: 0
+models: [qwen2_5_vl_7b]
+datasets:
+  - {config: textvqa}                        # VLMEvalKit protocol: no OCR reference tokens
+  - {config: mme, primary_metric: total}
+  - {config: mmbench_en}
+  - {config: mmbench_cn}
+methods:
+  - vanilla
+  - {config: fastv, budgets: [512, 256, 128]}
+  - {config: divprune, budgets: [512, 256, 128]}
+  - {config: cdpruner, budgets: [512, 256, 128]}
+generation: {max_new_tokens: 16}

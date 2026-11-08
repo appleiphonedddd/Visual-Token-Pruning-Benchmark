@@ -1,0 +1,27 @@
+# CDPruner Table 2: LLaVA-NeXT-7B (fp16) at fixed 672x672 @ 640 / 320 / 160 visual tokens.
+# Deviations from the paper:
+#   * 2,928 input tokens instead of 2,880 (HF anyres packing adds one newline token per row).
+#   * The llava_next adapter exposes no encoder features, so PruMerge+ / TRIM / VisionZip cannot run
+#     and are left out; CDPruner uses LLM-space relevance (paper: CLIP text encoder).
+# Needs >= 24 GB.
+name: cdpruner_table2_llava_next7b
+output_dir: outputs
+seed: 0
+models: [llava_next_7b]
+datasets:
+  - {config: vqav2}
+  - {config: gqa}
+  - {config: scienceqa_img}
+  - {config: textvqa, ocr_reference: true}
+  - {config: pope}
+  - {config: mme}
+  - {config: mmbench_en}
+  - {config: mmbench_cn}
+methods:
+  - vanilla
+  - {config: fastv, budgets: [640, 320]}     # paper reports FastV / PDrop only at 640 and 320
+  - {config: pdrop, budgets: [640, 320]}
+  - {config: dart, budgets: [640, 320, 160]}
+  - {config: divprune, budgets: [640, 320, 160]}
+  - {config: cdpruner, budgets: [640, 320, 160]}
+generation: {max_new_tokens: 16}

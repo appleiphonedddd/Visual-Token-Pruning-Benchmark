@@ -1,0 +1,28 @@
+# CDPruner Table 1: LLaVA-1.5-7B (fp16, no quantisation) @ 128 / 64 / 32 visual tokens (of 576).
+# Paper benchmarks we cannot run locally: VizWiz (eval server), MM-Vet (GPT judge); SparseVLM is not implemented.
+# CDPruner uses CLIP-space relevance here (clip_text_encoder), as in the paper.
+# Needs >= 24 GB. VQAv2 = validation subset (configs/datasets/vqav2.yaml limit: 5000); paper uses test-dev.
+name: cdpruner_table1_llava7b
+output_dir: outputs
+seed: 0
+models: [llava_1_5_7b_clip]
+datasets:
+  - {config: vqav2}
+  - {config: gqa}
+  - {config: scienceqa_img}
+  - {config: textvqa, ocr_reference: true}   # LLaVA-1.5 eval protocol used by the paper
+  - {config: pope}
+  - {config: mme}                            # perception, as in the paper
+  - {config: mmbench_en}
+  - {config: mmbench_cn}
+methods:
+  - vanilla
+  - {config: fastv, budgets: [128, 64]}      # paper reports FastV / PDrop only at 128 and 64
+  - {config: pdrop, budgets: [128, 64]}
+  - {config: prumerge_plus, budgets: [128, 64, 32]}
+  - {config: trim, budgets: [128, 64, 32]}
+  - {config: visionzip, budgets: [128, 64, 32]}
+  - {config: dart, budgets: [128, 64, 32]}
+  - {config: divprune, budgets: [128, 64, 32]}
+  - {config: cdpruner, budgets: [128, 64, 32]}
+generation: {max_new_tokens: 16}
