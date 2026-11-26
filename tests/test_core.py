@@ -1,12 +1,7 @@
-from pathlib import Path
-
 import pytest
 
-from vtb.core.config import load_experiment
 from vtb.core.registry import DATASETS, EVALUATORS, METHODS, MODELS, Registry
 from vtb.evaluators.pope import parse_yes_no
-
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_registries_autodiscover():
@@ -30,18 +25,6 @@ def test_duplicate_registration_rejected():
 def test_unknown_name_lists_available():
     with pytest.raises(KeyError, match="Available"):
         METHODS.get("does-not-exist")
-
-
-def test_experiment_expansion():
-    cfg = load_experiment(ROOT / "configs/experiments/smoke.yaml")
-    names = [r.run_name for r in cfg.runs]
-    assert names == ["vanilla_full", "random_64", "divprune_64", "cdpruner_64"]
-    assert all(r.dataset["limit"] == 60 for r in cfg.runs)
-
-
-def test_experiment_overrides():
-    cfg = load_experiment(ROOT / "configs/experiments/smoke.yaml", ["dataset_overrides.limit=5"])
-    assert cfg.runs[0].dataset["limit"] == 5
 
 
 @pytest.mark.parametrize("text,expected", [

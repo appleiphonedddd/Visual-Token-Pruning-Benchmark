@@ -184,20 +184,45 @@ pip install -e ".[dev]"
 pip install -e ".[quant]"   # optional: bitsandbytes for the *_4bit model configs
 ```
 
+**Or use Docker.** The image is based on `nvidia/cuda:12.8.1-base-ubuntu24.04` and comes with Python 3.11, PyTorch (cu128) and `.[dev,quant]` installed. The host needs the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+
+```bash
+docker build -t vtb .
+
+# Interactive shell; then run the Step 2 commands inside the container
+docker run --rm -it --gpus all --ipc=host \
+  --user "$(id -u):$(id -g)" \
+  -v ~/.cache/huggingface:/hf-cache \
+  -v "$PWD:/workspace" \
+  vtb
+
+# Or run a single command
+docker run --rm --gpus all --ipc=host --user "$(id -u):$(id -g)" \
+  -v ~/.cache/huggingface:/hf-cache -v "$PWD:/workspace" \
+  vtb vtb list
+```
+
+- `-v ~/.cache/huggingface:/hf-cache` reuses the host Hugging Face cache, so model weights and datasets are downloaded only once.
+- `-v "$PWD:/workspace"` mounts the source tree. Code changes take effect without a rebuild, and `outputs/` is written to the host.
+- `--user "$(id -u):$(id -g)"` runs as your host user, so files in the cache and `outputs/` are not owned by root.
+- `--ipc=host` gives PyTorch enough shared memory.
+
 ### Step 2 — Run Your First Evaluation
 
 ```bash
 # List registered models / methods / datasets / evaluators
 vtb list
 
-# POPE, 60 samples x {vanilla, random, DivPrune, CDPruner} @ 64 tokens (~1 min on an RTX 5070)
-vtb run configs/experiments/smoke.yaml
+# Quick run on a smaller GPU: the Qwen2.5-VL-7B experiment with Qwen2.5-VL-3B swapped in,
+# 60 samples per benchmark x {vanilla, FastV, DivPrune, CDPruner}
+vtb run configs/experiments/Qwen2.5-VL-7B.yaml \
+  models=[qwen2_5_vl_3b] dataset_overrides.limit=60 name=qwen3b_quick
 
 # Paper-style table: per-dataset score, Acc., Rel. (vs. vanilla), prefill latency
-vtb aggregate outputs/smoke
+vtb aggregate outputs/qwen3b_quick
 ```
 
-Model weights and datasets are downloaded from the Hugging Face Hub on first use (`Qwen/Qwen2.5-VL-3B-Instruct`, `lmms-lab/POPE`).
+Model weights and datasets are downloaded from the Hugging Face Hub on first use (`Qwen/Qwen2.5-VL-3B-Instruct`, `lmms-lab/textvqa`, `lmms-lab/MME`, `lmms-lab/MMBench`).
 
 ---
 
@@ -206,17 +231,16 @@ Model weights and datasets are downloaded from the Hugging Face Hub on first use
 Every experiment is a YAML file under [`configs/experiments/`](configs/experiments/). It expands into **models × datasets × methods × budgets**, and each model is loaded only once:
 
 ```bash
-vtb run configs/experiments/pope_qwen3b.yaml
+vtb run configs/experiments/Qwen2.5-VL-7B.yaml
 ```
 
 | Config | What it runs |
 |---|---|
-| [`smoke.yaml`](configs/experiments/smoke.yaml) | Qwen2.5-VL-3B · POPE (60) · vanilla / random / DivPrune / CDPruner @ 64 |
-| [`smoke_all.yaml`](configs/experiments/smoke_all.yaml) | Qwen2.5-VL-3B · all 7 benchmarks, small subsets · vanilla / CDPruner @ 64 (~5 min) |
-| [`methods_smoke.yaml`](configs/experiments/methods_smoke.yaml) | LLaVA-1.5-7B (+CLIP, 4-bit) and Qwen2.5-VL-3B · POPE (100) · all 12 methods @ 64 |
-| [`models_smoke.yaml`](configs/experiments/models_smoke.yaml) | 5 local models · POPE (100) · vanilla / pooling / DivPrune / CDPruner @ 64, incl. capability-based skips |
-| [`pope_qwen3b.yaml`](configs/experiments/pope_qwen3b.yaml) | Qwen2.5-VL-3B · POPE (900) · all pre-LLM methods @ 192 / 128 / 64 |
-| [`table1_qwen3b.yaml`](configs/experiments/table1_qwen3b.yaml) | Qwen2.5-VL-3B · all 7 benchmarks · all pre-LLM methods @ 192 / 128 / 64 (CDPruner Table 1 layout) |
+| [`LLaVA-1.5-7B.yaml`](configs/experiments/LLaVA-1.5-7B.yaml) | CDPruner Table 1 · LLaVA-1.5-7B (+CLIP, fp16) · 8 benchmarks · vanilla / FastV / PDrop / PruMerge+ / TRIM / VisionZip / DART / DivPrune / CDPruner @ 128 / 64 / 32 |
+| [`LLaVA-NeXT-7B.yaml`](configs/experiments/LLaVA-NeXT-7B.yaml) | CDPruner Table 2 · LLaVA-NeXT-7B (fp16, 672×672) · 8 benchmarks · vanilla / FastV / PDrop / DART / DivPrune / CDPruner @ 640 / 320 / 160 |
+| [`Qwen2.5-VL-7B.yaml`](configs/experiments/Qwen2.5-VL-7B.yaml) | CDPruner Table 4 · Qwen2.5-VL-7B (1008×1008) · TextVQA / MME / MMBench-EN / MMBench-CN · vanilla / FastV / DivPrune / CDPruner @ 512 / 256 / 128 |
+
+All three use fp16/bf16 7B models and need ≥ 24 GB. On a smaller GPU, swap the model from the command line (for example `models=[llava_1_5_7b_clip_4bit]` or `models=[qwen2_5_vl_3b]`) and cap the samples with `dataset_overrides.limit`.
 
 Results land in `outputs/<experiment>/<model>/<dataset>/<method>_<budget>/`:
 
@@ -229,7 +253,7 @@ Results land in `outputs/<experiment>/<model>/<dataset>/<method>_<budget>/`:
 Any key can be overridden with an OmegaConf dotlist:
 
 ```bash
-vtb run configs/experiments/pope_qwen3b.yaml \
+vtb run configs/experiments/Qwen2.5-VL-7B.yaml \
   dataset_overrides.limit=300 \
   generation.max_new_tokens=16 \
   model_overrides.image_size=[448,448]
@@ -238,7 +262,7 @@ vtb run configs/experiments/pope_qwen3b.yaml \
 Recompute metrics from saved predictions, for example after changing an evaluator:
 
 ```bash
-vtb score outputs/smoke/qwen2_5_vl_3b/pope/cdpruner_64
+vtb score outputs/qwen3b_quick/qwen2_5_vl_3b/mme/cdpruner_128
 ```
 
 </details>
