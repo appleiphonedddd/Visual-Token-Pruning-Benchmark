@@ -151,3 +151,30 @@ def test_last_token_attention_matches_eager(adapter, samples):
     k = min(64, ours.numel())
     overlap = len(set(torch.topk(ours, k).indices.tolist()) & set(torch.topk(ref, k).indices.tolist()))
     assert cos > 0.999 and overlap >= 0.9 * k, (float(cos), overlap)
+
+
+@torch.inference_mode()
+def test_hardware_metrics(adapter, samples):
+    """Measured KV cache == analytic size for vanilla; in-LLM pruning shrinks it; decode steps are counted."""
+    from vtb.core.registry import METHODS
+
+    ds, items = samples
+    s = items[0]
+    prompt = ds.format_prompt(s)
+    adapter.generate(s, prompt, METHODS.build("vanilla"), 8)  # warmup
+    ref = adapter.generate(s, prompt, METHODS.build("vanilla"), 8)
+
+    c = adapter.model.config.get_text_config()
+    head_dim = getattr(c, "head_dim", None) or c.hidden_size // c.num_attention_heads
+    kv_heads = getattr(c, "num_key_value_heads", None) or c.num_attention_heads
+    elem = torch.tensor([], dtype=adapter.dtype).element_size()
+    expected_mb = 2 * c.num_hidden_layers * kv_heads * head_dim * ref.seq_len * elem / 2**20
+    assert ref.kv_cache_mb == pytest.approx(expected_mb, rel=0.05, abs=1.0)
+    assert ref.prefill_mem_mb >= ref.kv_cache_mb
+    assert ref.peak_mem_mb > ref.prefill_mem_mb
+    assert ref.num_decode_steps in (ref.num_generated, ref.num_generated - 1)
+
+    fastv = METHODS.build("fastv", budget=16)
+    if not adapter.supports(fastv):
+        pruned = adapter.generate(s, prompt, fastv, 8)
+        assert pruned.kv_cache_mb < ref.kv_cache_mb

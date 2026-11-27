@@ -154,7 +154,7 @@ src/vtb/
 ├── methods/     base.py (PreLLMPruner / InLLMPruner) · simple.py · divprune.py · cdpruner.py · visionzip.py · prumerge.py · trim.py · fastv.py (FastV, PDrop) · dart.py
 ├── datasets/    base.py (BaseDataset) · pope.py · mme.py · gqa.py · vqa.py · multiple_choice.py
 ├── evaluators/  base.py (BaseEvaluator) · pope.py · mme.py · exact_match.py · vqa_accuracy.py · multiple_choice.py
-├── profiling/   flops.py
+├── profiling/   flops.py (analytic prefill FLOPs) · hardware.py (CUDA memory probes, device info)
 └── runner/      experiment.py · io.py · aggregate.py
 ```
 
@@ -218,7 +218,7 @@ vtb list
 vtb run configs/experiments/Qwen2.5-VL-7B.yaml \
   models=[qwen2_5_vl_3b] dataset_overrides.limit=60 name=qwen3b_quick
 
-# Paper-style table: per-dataset score, Acc., Rel. (vs. vanilla), prefill latency
+# Paper-style table: per-dataset score, Acc., Rel. (vs. vanilla), prefill latency, decode tok/s, KV cache, peak memory
 vtb aggregate outputs/qwen3b_quick
 ```
 
@@ -245,7 +245,29 @@ All three use fp16/bf16 7B models and need ≥ 24 GB. On a smaller GPU, swap the
 Results land in `outputs/<experiment>/<model>/<dataset>/<method>_<budget>/`:
 
 - `predictions.jsonl` has one record per sample. Interrupted runs resume where they stopped.
-- `metrics.json` has scores, efficiency (vision / prune / prefill / decode ms, prefill TFLOPs, peak memory) and the fully resolved config.
+- `metrics.json` has scores, efficiency (latency, decode throughput, GPU memory, prefill TFLOPs), the GPU / torch / CUDA versions it was measured on, and the fully resolved config.
+
+<details>
+<summary><strong>Efficiency metrics</strong></summary>
+
+Every sample is timed with `perf_counter` around `torch.cuda.synchronize()` and probed with the PyTorch CUDA allocator. Batch size is 1. Each run starts with one unrecorded warmup sample (`generation.warmup`, default 1), because every method has its own cold-start cost.
+
+| Key in `metrics.json` → `efficiency` | Meaning |
+|---|---|
+| `avg_vision_ms` / `avg_prune_ms` | Preprocessing + vision encoder + projector / pre-LLM pruning + splicing |
+| `avg_prefill_ms`, `p50_` / `p90_prefill_ms` | LLM prefill up to the first output token (includes in-LLM pruning) |
+| `avg_ttft_ms`, `p50_` / `p90_ttft_ms` | Time to first token = vision + prune + prefill |
+| `decode_tokens_per_s`, `avg_tpot_ms` | Decode throughput and time per output token, pooled over the run: Σ decode steps / Σ decode time |
+| `avg_kv_cache_mb` | Allocator growth across prefill, i.e. the KV cache prefill leaves behind (`pytest -m gpu` checks it against 2·layers·kv_heads·head_dim·L·bytes) |
+| `avg_prefill_mem_mb` | Prefill peak above what was allocated before prefill: activations + KV cache |
+| `peak_memory_gb` | Peak allocation over any sample, **model weights included** |
+| `avg_prefill_tflops` | Analytic estimate from [`flops.py`](src/vtb/profiling/flops.py), using the mean per-layer length for in-LLM methods |
+
+- Memory values are `torch.cuda.max_memory_allocated` (live tensors), not the larger `nvidia-smi` figure, which also counts the allocator cache and the CUDA context.
+- `peak_memory_gb` is often set by the vision encoder (e.g. LLaVA-NeXT / OneVision anyres), which runs before any pruning. The LLM-side savings show up in `kv_cache_mb` and `prefill_mem_mb`.
+- Short-answer benchmarks (POPE, MME, multiple choice) produce about one decode step per sample. Decode throughput there is dominated by reading the weights, so differences between methods only show up with longer contexts or answers (raise `generation.max_new_tokens` on an open-ended benchmark).
+
+</details>
 
 <details>
 <summary><strong>Overriding settings from the command line</strong></summary>

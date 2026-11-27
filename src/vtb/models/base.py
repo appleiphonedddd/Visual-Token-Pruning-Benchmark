@@ -18,6 +18,7 @@ import torch
 
 from vtb.core.types import Feature, Prediction, PruneResult, PruningContext, Sample
 from vtb.methods.base import BasePruner, InLLMPruner, PreLLMPruner
+from vtb.profiling.hardware import MemoryProbe
 
 DTYPES = {"bfloat16": torch.bfloat16, "float16": torch.float16, "float32": torch.float32}
 
@@ -135,8 +136,10 @@ class BaseVLMAdapter(ABC):
     def generate(self, sample: Sample, prompt: str, pruner: BasePruner, max_new_tokens: int = 16) -> Prediction:
         self._wanted = self.needs(pruner)
         in_llm = isinstance(pruner, InLLMPruner)
+        mem = MemoryProbe(self.device)
 
         _sync(self.device)
+        mem.reset_peak()
         t0 = time.perf_counter()
         prepared = self.prepare(sample, prompt)
         _sync(self.device)
@@ -153,6 +156,8 @@ class BaseVLMAdapter(ABC):
         asm = self.assemble(prepared, result)
         _sync(self.device)
         t2 = time.perf_counter()
+        peak_pre = mem.phase()
+        before_prefill = mem.allocated()
 
         cache = self.new_cache()
         seq_len = int(asm.inputs_embeds.shape[1])
@@ -167,8 +172,11 @@ class BaseVLMAdapter(ABC):
         token = int(torch.argmax(logits))
         _sync(self.device)
         t3 = time.perf_counter()
+        peak_prefill = mem.phase()
+        after_prefill = mem.allocated()  # prefill activations are freed; what remains is the KV cache
 
         generated: list[int] = []
+        steps = 0
         pos = asm.next_position
         eos = self.eos_token_ids
         while token not in eos and len(generated) < max_new_tokens:
@@ -178,8 +186,10 @@ class BaseVLMAdapter(ABC):
             logits = step(self.embed_token(token), self.decode_position_ids(pos), cache)
             token = int(torch.argmax(logits))
             pos += 1
+            steps += 1
         _sync(self.device)
         t4 = time.perf_counter()
+        peak_decode = mem.phase()
 
         return Prediction(
             sample_id=sample.id,
@@ -193,6 +203,10 @@ class BaseVLMAdapter(ABC):
             prefill_ms=(t3 - t2) * 1e3,
             decode_ms=(t4 - t3) * 1e3,
             num_generated=len(generated),
+            num_decode_steps=steps,
+            peak_mem_mb=max(peak_pre, peak_prefill, peak_decode),
+            prefill_mem_mb=peak_prefill - before_prefill,
+            kv_cache_mb=after_prefill - before_prefill,
         )
 
     def llm_dims(self) -> dict[str, int]:

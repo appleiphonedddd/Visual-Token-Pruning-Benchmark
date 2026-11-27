@@ -97,4 +97,9 @@ class Prediction:
     prefill_ms: float = 0.0  # LLM prefill only
     decode_ms: float = 0.0
     num_generated: int = 0
+    num_decode_steps: int = 0  # LLM forwards in the decode loop (the first token comes from prefill)
+    # CUDA allocator readings in MiB (0 on CPU), see vtb.profiling.hardware
+    peak_mem_mb: float = 0.0  # peak over the whole sample, model weights included
+    prefill_mem_mb: float = 0.0  # prefill peak above what was allocated before it: activations + KV cache
+    kv_cache_mb: float = 0.0  # allocation growth across prefill, i.e. the KV cache it leaves behind
     meta: dict[str, Any] = field(default_factory=dict)
